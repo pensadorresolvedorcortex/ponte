@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Envios - Visualização Pública</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    .container { padding: 2rem; max-width: 900px; margin: auto; }
+    #mapa { height: 300px; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 0.5rem; border: 1px solid #ccc; text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Visualização Pública de Envios</h1>
+    <div id="mapa"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Destinatário</th>
+          <th>Endereço</th>
+          <th>Status</th>
+          <th>Lat</th>
+          <th>Lon</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaEnvios"></tbody>
+    </table>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const mapa = L.map('mapa').setView([-23.55052, -46.633308], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(mapa);
+
+    async function carregarEnvios() {
+      const res = await fetch('https://logposte-backend.up.railway.app/api/envios');
+      const dados = await res.json();
+      const tbody = document.getElementById('tabelaEnvios');
+
+      dados.forEach(envio => {
+        const linha = document.createElement('tr');
+        linha.innerHTML = `
+          <td>${envio.id}</td>
+          <td>${envio.destinatario}</td>
+          <td>${envio.endereco}</td>
+          <td>${envio.status}</td>
+          <td>${envio.lat}</td>
+          <td>${envio.lon}</td>
+        `;
+        tbody.appendChild(linha);
+
+        if (envio.lat && envio.lon) {
+          L.marker([envio.lat, envio.lon]).addTo(mapa)
+            .bindPopup(\`<strong>${envio.destinatario}</strong><br>${envio.status}\`);
+        }
+      });
+    }
+
+    carregarEnvios();
+  </script>
+</body>
+</html>
